@@ -6,6 +6,7 @@ import { io } from "socket.io-client"
 
 function App() {
   const [count, setCount] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
   const [socket, setSocket] = useState(null);
   const [username, setUsername] = useState("");
   
@@ -24,20 +25,32 @@ function App() {
         setSocket(_socket);
     };
     
+    const onConnected = () => {
+        console.log("front - connected to socket");
+        setIsConnected(true);
+    };
+    
     const disconnectToSocket = () => {
         console.log("disconnect to socket");
         socket?.disconnect();
-        setSocket(!socket);
+        setSocket(null);
     };
+    
+    const onDisconnected = () => {
+        console.log("front - disconnected to socket");
+        setIsConnected(false);
+    }
 
     useEffect(() => {
-        if (socket) {
-            socket.on("connect", () => {
-                console.log("connected to server");
-            });
-            socket.on("disconnect", () => {
-                console.log("disconnected from server");
-            });
+        console.log('useEffect called!');
+        socket?.on('connect', onConnected);
+        socket?.on('disconnect', onDisconnected);
+        
+        return () => {
+            console.log('useEffect cleanup function called!');
+            socket?.off('connect', onConnected);
+            socket?.off('disconnect', onDisconnected);
+
         }
     }, [socket]);
     
@@ -56,13 +69,11 @@ function App() {
             <button onClick={() => setCount((count) => count + 1)}>
                 count is {count}
             </button>
-            <p>
-                Edit <code>src/App.jsx</code> and save to test HMR
-            </p>
         </div>
         <div className="card">
             <h2>사용자 : {username}</h2>
-            <input type="text" value={username} onChange={handleUsernameChange} placeholder="Type username here" />
+             <h3>{isConnected ? `"${username}" 님이 접속하셨습니다.` : `미접속`}</h3>
+            <input type="text" value={username} onChange={handleUsernameChange} />
 
           <button onClick={connectToSocket}>접속
           </button>
